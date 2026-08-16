@@ -48,6 +48,11 @@ export default function App() {
   useEffect(() => {
     loadData();
 
+    // Auto-sync every 5 seconds so updates from PC reflect live on Mobile
+    const syncInterval = setInterval(() => {
+      loadData();
+    }, 5000);
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         loadData();
@@ -68,6 +73,7 @@ export default function App() {
     window.addEventListener('hashchange', handleLocationCheck);
 
     return () => {
+      clearInterval(syncInterval);
       window.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('focus', loadData);
       window.removeEventListener('popstate', handleLocationCheck);

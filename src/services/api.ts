@@ -60,7 +60,7 @@ export async function fetchSiteData(): Promise<SiteData> {
 
 // Update site data
 export async function updateSiteData(updatedData: SiteData, pin?: string): Promise<boolean> {
-  // Always update local cache for instant UI response
+  // Save locally first for instant feedback
   saveLocalSiteData(updatedData);
 
   try {
@@ -72,10 +72,16 @@ export async function updateSiteData(updatedData: SiteData, pin?: string): Promi
       },
       body: JSON.stringify(updatedData),
     });
-    return res.ok;
+
+    if (res.ok) {
+      return true;
+    } else {
+      console.error('Server rejected site data save', res.status, res.statusText);
+      return false;
+    }
   } catch (e) {
-    console.warn('Server save failed, saved locally', e);
-    return true;
+    console.error('Server save failed due to network or connection issue', e);
+    return false;
   }
 }
 
