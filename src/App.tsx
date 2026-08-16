@@ -48,6 +48,12 @@ export default function App() {
   useEffect(() => {
     loadData();
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadData();
+      }
+    };
+
     const handleLocationCheck = () => {
       if (checkIsAdminRoute()) {
         setIsAdminOpen(true);
@@ -56,10 +62,14 @@ export default function App() {
 
     handleLocationCheck();
 
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', loadData);
     window.addEventListener('popstate', handleLocationCheck);
     window.addEventListener('hashchange', handleLocationCheck);
 
     return () => {
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', loadData);
       window.removeEventListener('popstate', handleLocationCheck);
       window.removeEventListener('hashchange', handleLocationCheck);
     };

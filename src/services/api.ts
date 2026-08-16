@@ -41,7 +41,12 @@ export function saveLocalSiteData(data: SiteData): void {
 // Fetch site data from Server or Local fallback
 export async function fetchSiteData(): Promise<SiteData> {
   try {
-    const res = await fetch('/api/site-data');
+    const res = await fetch(`/api/site-data?_t=${Date.now()}`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
     if (res.ok) {
       const data = await res.json();
       saveLocalSiteData(data);
@@ -77,7 +82,12 @@ export async function updateSiteData(updatedData: SiteData, pin?: string): Promi
 // Fetch contact/quote requests
 export async function fetchContactRequests(): Promise<ContactRequest[]> {
   try {
-    const res = await fetch('/api/contact-requests');
+    const res = await fetch(`/api/contact-requests?_t=${Date.now()}`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
     if (res.ok) {
       const requests = await res.json();
       localStorage.setItem(CONTACT_REQUESTS_KEY, JSON.stringify(requests));
