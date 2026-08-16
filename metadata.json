@@ -1,0 +1,6 @@
+{
+  "name": "المهل للنقليات وخدمات النقل",
+  "description": "موقع تعريفي احترافي ولوحة تحكم شاملة لشركة المهل للنقليات وخدمات النقل الشاملة في المملكة العربية السعودية والخليج.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
