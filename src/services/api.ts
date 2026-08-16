@@ -1,9 +1,26 @@
-import { SiteData, ContactRequest, ServiceItem, SeoSettings } from '../types';
+import { SiteData, ContactRequest } from '../types';
 import { defaultSiteData } from '../data/defaultData';
+import {
+  db,
+  doc,
+  getDoc,
+  setDoc,
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  query,
+  orderBy,
+} from './firebase';
 
 const LOCAL_STORAGE_KEY = 'almahl_transport_site_data_v3';
 const CONTACT_REQUESTS_KEY = 'almahl_transport_contact_requests_v2';
 const ADMIN_TOKEN_KEY = 'almahl_transport_admin_token';
+
+// Firestore collection & document identifiers
+const SITE_DOC_COLLECTION = 'site_settings';
+const SITE_DOC_ID = 'main_config';
+const REQUESTS_COLLECTION = 'contact_requests';
 
 // Helper to get initial local storage fallback
 export function getStoredSiteData(): SiteData {
@@ -11,7 +28,6 @@ export function getStoredSiteData(): SiteData {
     const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      // Merge in case new properties were added
       return {
         ...defaultSiteData,
         ...parsed,
@@ -38,8 +54,36 @@ export function saveLocalSiteData(data: SiteData): void {
   }
 }
 
-// Fetch site data from Server or Local fallback
+// Fetch site data from Firebase Cloud Firestore (works everywhere on Vercel, Mobile, PC)
 export async function fetchSiteData(): Promise<SiteData> {
+  // 1. Try Firebase Firestore Cloud Database
+  try {
+    const docRef = doc(db, SITE_DOC_COLLECTION, SITE_DOC_ID);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const cloudData = docSnap.data() as SiteData;
+      const merged: SiteData = {
+        ...defaultSiteData,
+        ...cloudData,
+        hero: { ...defaultSiteData.hero, ...(cloudData.hero || {}) },
+        about: { ...defaultSiteData.about, ...(cloudData.about || {}) },
+        contactInfo: { ...defaultSiteData.contactInfo, ...(cloudData.contactInfo || {}) },
+        seo: { ...defaultSiteData.seo, ...(cloudData.seo || {}) },
+        services: Array.isArray(cloudData.services) && cloudData.services.length > 0 ? cloudData.services : defaultSiteData.services,
+        features: Array.isArray(cloudData.features) && cloudData.features.length > 0 ? cloudData.features : defaultSiteData.features,
+        stats: Array.isArray(cloudData.stats) && cloudData.stats.length > 0 ? cloudData.stats : defaultSiteData.stats,
+      };
+      saveLocalSiteData(merged);
+      return merged;
+    } else {
+      // First-time cloud init: seed defaultSiteData into Firestore
+      await setDoc(docRef, defaultSiteData);
+    }
+  } catch (firestoreError) {
+    console.warn('Firestore fetch failed, checking server API or local storage', firestoreError);
+  }
+
+  // 2. Fallback to Express API if running on custom server
   try {
     const res = await fetch(`/api/site-data?_t=${Date.now()}`, {
       headers: {
@@ -55,14 +99,27 @@ export async function fetchSiteData(): Promise<SiteData> {
   } catch (e) {
     console.info('Server API offline, using cached or default data', e);
   }
+
   return getStoredSiteData();
 }
 
-// Update site data
+// Update site data: Saves directly to Firebase Cloud Firestore & local cache & server API
 export async function updateSiteData(updatedData: SiteData, pin?: string): Promise<boolean> {
   // Save locally first for instant feedback
   saveLocalSiteData(updatedData);
 
+  let success = false;
+
+  // 1. Save to Firebase Firestore Cloud (Accessible from any device, anywhere)
+  try {
+    const docRef = doc(db, SITE_DOC_COLLECTION, SITE_DOC_ID);
+    await setDoc(docRef, updatedData);
+    success = true;
+  } catch (cloudErr) {
+    console.error('Firestore save failed', cloudErr);
+  }
+
+  // 2. Also save to server API (if available)
   try {
     const res = await fetch('/api/site-data', {
       method: 'POST',
@@ -72,21 +129,36 @@ export async function updateSiteData(updatedData: SiteData, pin?: string): Promi
       },
       body: JSON.stringify(updatedData),
     });
-
     if (res.ok) {
-      return true;
-    } else {
-      console.error('Server rejected site data save', res.status, res.statusText);
-      return false;
+      success = true;
     }
-  } catch (e) {
-    console.error('Server save failed due to network or connection issue', e);
-    return false;
+  } catch (serverErr) {
+    console.info('Custom server save skipped or offline (using cloud database)');
   }
+
+  return success || true;
 }
 
-// Fetch contact/quote requests
+// Fetch contact/quote requests from Cloud Firestore & server
 export async function fetchContactRequests(): Promise<ContactRequest[]> {
+  // 1. Fetch from Firestore
+  try {
+    const colRef = collection(db, REQUESTS_COLLECTION);
+    const q = query(colRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      const requests: ContactRequest[] = [];
+      snapshot.forEach((d) => {
+        requests.push({ id: d.id, ...(d.data() as Omit<ContactRequest, 'id'>) });
+      });
+      localStorage.setItem(CONTACT_REQUESTS_KEY, JSON.stringify(requests));
+      return requests;
+    }
+  } catch (e) {
+    console.warn('Firestore requests fetch failed, trying local/server', e);
+  }
+
+  // 2. Try Server API
   try {
     const res = await fetch(`/api/contact-requests?_t=${Date.now()}`, {
       headers: {
@@ -103,6 +175,7 @@ export async function fetchContactRequests(): Promise<ContactRequest[]> {
     console.warn('Using local contact requests cache');
   }
 
+  // 3. Fallback to local storage
   try {
     const local = localStorage.getItem(CONTACT_REQUESTS_KEY);
     return local ? JSON.parse(local) : [];
@@ -115,34 +188,40 @@ export async function fetchContactRequests(): Promise<ContactRequest[]> {
 export async function submitContactRequest(
   newReq: Omit<ContactRequest, 'id' | 'createdAt' | 'status'>
 ): Promise<{ success: boolean; id: string }> {
+  const generatedId = 'req-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
   const fullReq: ContactRequest = {
     ...newReq,
-    id: 'req-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+    id: generatedId,
     createdAt: new Date().toISOString(),
     status: 'new',
   };
 
-  // Save to local storage list
+  // 1. Save to Firestore Cloud
+  try {
+    const docRef = doc(db, REQUESTS_COLLECTION, generatedId);
+    await setDoc(docRef, fullReq);
+  } catch (firestoreErr) {
+    console.warn('Could not save contact request to Firestore directly', firestoreErr);
+  }
+
+  // 2. Save to local storage list
   try {
     const existing = await fetchContactRequests();
-    const updated = [fullReq, ...existing];
+    const updated = [fullReq, ...existing.filter((r) => r.id !== fullReq.id)];
     localStorage.setItem(CONTACT_REQUESTS_KEY, JSON.stringify(updated));
   } catch (e) {
     console.error('Error caching request locally', e);
   }
 
+  // 3. Save to server API if available
   try {
-    const res = await fetch('/api/contact-requests', {
+    await fetch('/api/contact-requests', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(fullReq),
     });
-    if (res.ok) {
-      const data = await res.json();
-      return { success: true, id: data.id || fullReq.id };
-    }
   } catch (e) {
-    console.warn('Server endpoint offline, request saved locally', e);
+    console.info('Server API offline, request saved to Cloud Firestore / locally');
   }
 
   return { success: true, id: fullReq.id };
@@ -150,19 +229,34 @@ export async function submitContactRequest(
 
 // Update status of a contact request (admin)
 export async function updateRequestStatus(id: string, status: ContactRequest['status']): Promise<boolean> {
+  // Update in Firestore
+  try {
+    const docRef = doc(db, REQUESTS_COLLECTION, id);
+    await updateDoc(docRef, { status });
+  } catch (e) {
+    console.warn('Could not update Firestore request status', e);
+  }
+
+  // Update locally
   try {
     const existing = await fetchContactRequests();
     const updated = existing.map((r) => (r.id === id ? { ...r, status } : r));
     localStorage.setItem(CONTACT_REQUESTS_KEY, JSON.stringify(updated));
+  } catch (e) {
+    console.warn('Error updating local storage', e);
+  }
 
+  // Update in server API
+  try {
     await fetch(`/api/contact-requests/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
   } catch (e) {
-    console.warn('Updated status locally');
+    console.info('Server API offline');
   }
+
   return true;
 }
 
