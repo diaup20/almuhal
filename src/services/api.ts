@@ -151,9 +151,22 @@ export async function updateRequestStatus(id: string, status: ContactRequest['st
 }
 
 // Admin auth verify
+export async function verifyAdminCredentials(username: string, password: string): Promise<boolean> {
+  const currentData = await fetchSiteData();
+  const expectedUser = currentData.adminUsername || 'almhal';
+  const expectedPass = currentData.adminPassword || currentData.adminPin || 'almhal!@#123';
+
+  const valid = username.trim() === expectedUser && password.trim() === expectedPass;
+  if (valid) {
+    localStorage.setItem(ADMIN_TOKEN_KEY, `${username.trim()}:${password.trim()}`);
+  }
+  return valid;
+}
+
 export async function verifyAdminPin(pin: string): Promise<boolean> {
   const currentData = await fetchSiteData();
-  const valid = pin.trim() === currentData.adminPin;
+  const expectedPass = currentData.adminPassword || currentData.adminPin || 'almhal!@#123';
+  const valid = pin.trim() === expectedPass || pin.trim() === (currentData.adminPin || '');
   if (valid) {
     localStorage.setItem(ADMIN_TOKEN_KEY, pin);
   }

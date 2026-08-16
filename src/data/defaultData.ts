@@ -5,7 +5,9 @@ const portakabinImg = '/src/assets/images/portakabin_transport_1786835552808.jpg
 const containerImg = '/src/assets/images/container_transport_1786835565647.jpg';
 
 export const defaultSiteData: SiteData = {
-  adminPin: '123456', // Default admin access pin
+  adminPin: 'almhal!@#123',
+  adminUsername: 'almhal',
+  adminPassword: 'almhal!@#123',
   
   hero: {
     headline: 'المهل للنقليات وخدمات النقل الشاملة',

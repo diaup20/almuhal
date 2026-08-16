@@ -26,7 +26,7 @@ import {
   Image
 } from 'lucide-react';
 import { SiteData, ServiceItem, ContactRequest, FeatureItem, CompanyStat, SeoSettings, GalleryItem } from '../../types';
-import { updateSiteData, fetchContactRequests, updateRequestStatus, logoutAdmin, verifyAdminPin } from '../../services/api';
+import { updateSiteData, fetchContactRequests, updateRequestStatus, logoutAdmin, verifyAdminPin, verifyAdminCredentials } from '../../services/api';
 import { IconRenderer } from '../IconRenderer';
 
 interface AdminDashboardProps {
@@ -41,7 +41,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onCloseAdmin,
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [pinInput, setPinInput] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [authError, setAuthError] = useState('');
 
   const [activeTab, setActiveTab] = useState<
@@ -74,22 +76,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   useEffect(() => {
     // Check if previously logged in
     const cachedToken = localStorage.getItem('almahl_transport_admin_token');
-    if (cachedToken === siteData.adminPin) {
+    const expectedUser = siteData.adminUsername || 'almhal';
+    const expectedPass = siteData.adminPassword || siteData.adminPin || 'almhal!@#123';
+    if (
+      cachedToken &&
+      (cachedToken === `${expectedUser}:${expectedPass}` ||
+        cachedToken === expectedPass ||
+        cachedToken === siteData.adminPin)
+    ) {
       setIsAuthenticated(true);
       loadRequests();
     }
-  }, [siteData.adminPin]);
+  }, [siteData]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
-    const valid = await verifyAdminPin(pinInput);
-    if (valid) {
+    
+    // Try username + password login
+    const validCreds = await verifyAdminCredentials(usernameInput, passwordInput);
+    if (validCreds) {
       setIsAuthenticated(true);
       loadRequests();
-    } else {
-      setAuthError('الرمز السري غير صحيح. يرجى المحاولة مرة أخرى.');
+      return;
     }
+
+    // Fallback try pin/password
+    const validPin = await verifyAdminPin(passwordInput || usernameInput);
+    if (validPin) {
+      setIsAuthenticated(true);
+      loadRequests();
+      return;
+    }
+
+    setAuthError('اسم المستخدم أو كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.');
   };
 
   const loadRequests = async () => {
@@ -236,22 +256,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // If not authenticated, render Login Screen
   if (!isAuthenticated) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-xl animate-in fade-in duration-200 text-slate-100">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/98 backdrop-blur-xl animate-in fade-in duration-200 text-slate-100 dir-rtl">
         <div className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6">
           <button
             onClick={onCloseAdmin}
             className="absolute top-4 left-4 p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            title="العودة للموقع الرئيسي"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="text-center space-y-3">
+          <div className="text-center space-y-2">
             <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto">
               <Shield className="w-8 h-8" />
             </div>
-            <h2 className="text-2xl font-black text-white">لوحة تحكم المهل للنقليات</h2>
+            <h2 className="text-2xl font-black text-white">تسجيل دخول المشرف</h2>
             <p className="text-xs text-slate-400">
-              يرجى إدخال رمز الحماية السري لتسجيل الدخول وإدارة المحتوى.
+              لوحة إدارة شركة المهل للنقليات وخدمات النقل
             </p>
           </div>
 
@@ -264,18 +285,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             )}
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-2">رمز المشرف السري (PIN)</label>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">اسم المستخدم (Username)</label>
               <input
-                type="password"
+                type="text"
                 required
-                value={pinInput}
-                onChange={(e) => setPinInput(e.target.value)}
-                placeholder="أدخل رمز PIN"
-                className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-center text-white text-lg tracking-widest focus:border-amber-500 focus:outline-none"
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value)}
+                placeholder="أدخل اسم المستخدم"
+                className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:border-amber-500 focus:outline-none"
               />
-              <p className="text-[11px] text-slate-500 mt-1.5 text-center">
-                (الرمز السري الافتراضي: <span className="font-mono text-amber-400">123456</span>)
-              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">كلمة المرور (Password)</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  placeholder="أدخل كلمة المرور"
+                  className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:border-amber-500 focus:outline-none pl-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 text-xs font-bold py-1 px-1.5 rounded"
+                >
+                  {showPassword ? 'إخفاء' : 'إظهار'}
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3 bg-slate-950/80 border border-slate-800/80 rounded-xl text-[11px] text-slate-400 space-y-1">
+              <div className="flex justify-between items-center">
+                <span>اسم المستخدم الافتراضي:</span>
+                <span className="font-mono text-amber-400 font-extrabold dir-ltr">almhal</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span>كلمة المرور الافتراضية:</span>
+                <span className="font-mono text-amber-400 font-extrabold dir-ltr">almhal!@#123</span>
+              </div>
             </div>
 
             <button
@@ -283,6 +333,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               className="w-full py-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
             >
               تسجيل الدخول إلى لوحة التحكم
+            </button>
+
+            <button
+              type="button"
+              onClick={onCloseAdmin}
+              className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition-colors cursor-pointer"
+            >
+              العودة للموقع الرئيسي
             </button>
           </form>
         </div>
@@ -1056,26 +1114,49 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             </div>
           )}
 
-          {/* TAB 7: Security PIN */}
+          {/* TAB 7: Security PIN & Credentials */}
           {activeTab === 'security' && (
-            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 max-w-md">
+            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-5 max-w-md">
               <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
                 <Key className="w-5 h-5" />
-                تغيير الرمز السري لوحة التحكم
+                تغيير بيانات الدخول للوحة التحكم
               </h3>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-2">الرمز السري الجديد (PIN)</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">اسم المستخدم (Username)</label>
                 <input
-                  type="password"
-                  value={editableData.adminPin}
-                  onChange={(e) => setEditableData({ ...editableData, adminPin: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-white text-center text-lg tracking-widest focus:border-amber-500 focus:outline-none"
+                  type="text"
+                  value={editableData.adminUsername || 'almhal'}
+                  onChange={(e) =>
+                    setEditableData({
+                      ...editableData,
+                      adminUsername: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:border-amber-500 focus:outline-none"
+                  placeholder="almhal"
                 />
               </div>
 
-              <p className="text-xs text-slate-400">
-                تأكد من حفظ الرمز في مكان آمن لاستخدامه عند تسجيل الدخول لاحقاً.
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">كلمة المرور الجديدة (Password)</label>
+                <input
+                  type="text"
+                  value={editableData.adminPassword || editableData.adminPin || 'almhal!@#123'}
+                  onChange={(e) =>
+                    setEditableData({
+                      ...editableData,
+                      adminPassword: e.target.value,
+                      adminPin: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm focus:border-amber-500 focus:outline-none font-mono"
+                  placeholder="almhal!@#123"
+                />
+              </div>
+
+              <p className="text-xs text-slate-400 leading-relaxed">
+                تأكد من حفظ البيانات واحتفاظك باسم المستخدم وكلمة المرور في مكان آمن لاستخدامهما عند دخول رابط الإدارة مستقبلاً.
               </p>
             </div>
           )}

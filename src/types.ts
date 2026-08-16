@@ -105,4 +105,6 @@ export interface SiteData {
   contactInfo: ContactInfo;
   seo: SeoSettings;
   adminPin: string;
+  adminUsername?: string;
+  adminPassword?: string;
 }

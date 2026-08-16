@@ -5,10 +5,10 @@ import siteLogoImg from '../assets/images/site_logo_gold_1786889577772.jpg';
 
 interface FooterProps {
   contactInfo: ContactInfo;
-  onOpenAdmin: () => void;
+  onOpenAdmin?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ contactInfo, onOpenAdmin }) => {
+export const Footer: React.FC<FooterProps> = ({ contactInfo }) => {
   const facebookUrl = contactInfo.socials.facebook || 'https://facebook.com/almahltransport';
   const instagramUrl = contactInfo.socials.instagram || 'https://instagram.com/almahl_transport';
   const twitterUrl = contactInfo.socials.twitter || 'https://twitter.com/almahl_transport';
@@ -305,16 +305,6 @@ export const Footer: React.FC<FooterProps> = ({ contactInfo, onOpenAdmin }) => {
           <div>
             © {new Date().getFullYear()} شركة المهل للنقليات وخدمات النقل. جميع الحقوق محفوظة.
           </div>
-
-          {/* Secret/Discreet Admin Link */}
-          <button
-            onClick={onOpenAdmin}
-            className="flex items-center gap-1.5 text-slate-600 hover:text-amber-400 transition-colors py-1 px-2.5 rounded-lg hover:bg-slate-900 cursor-pointer"
-            title="دخول المشرف"
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>بوابة الإدارة</span>
-          </button>
         </div>
 
       </div>

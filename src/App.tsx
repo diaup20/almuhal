@@ -33,14 +33,36 @@ export default function App() {
     setLoading(false);
   };
 
+  const checkIsAdminRoute = () => {
+    const path = window.location.pathname.toLowerCase().replace(/\/$/, '');
+    const hash = window.location.hash.toLowerCase();
+    return (
+      path === '/admin/login' ||
+      path === '/admin' ||
+      path === '/admin-login' ||
+      hash === '#admin' ||
+      hash === '#/admin/login'
+    );
+  };
+
   useEffect(() => {
     loadData();
 
-    // Check if URL pathname matches secret path /admin-login or /admin
-    const path = window.location.pathname;
-    if (path === '/admin-login' || path === '/admin' || window.location.hash === '#admin') {
-      setIsAdminOpen(true);
-    }
+    const handleLocationCheck = () => {
+      if (checkIsAdminRoute()) {
+        setIsAdminOpen(true);
+      }
+    };
+
+    handleLocationCheck();
+
+    window.addEventListener('popstate', handleLocationCheck);
+    window.addEventListener('hashchange', handleLocationCheck);
+
+    return () => {
+      window.removeEventListener('popstate', handleLocationCheck);
+      window.removeEventListener('hashchange', handleLocationCheck);
+    };
   }, []);
 
   const handleOpenQuoteModal = (serviceName?: string) => {
@@ -121,8 +143,8 @@ export default function App() {
           onRefreshData={loadData}
           onCloseAdmin={() => {
             setIsAdminOpen(false);
-            if (window.location.hash === '#admin') {
-              window.history.pushState('', document.title, window.location.pathname);
+            if (checkIsAdminRoute()) {
+              window.history.pushState('', document.title, '/');
             }
           }}
         />

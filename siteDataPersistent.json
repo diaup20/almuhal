@@ -1,5 +1,7 @@
 {
-  "adminPin": "123456",
+  "adminPin": "almhal!@#123",
+  "adminUsername": "almhal",
+  "adminPassword": "almhal!@#123",
   "hero": {
     "headline": "المهل للنقليات وخدمات النقل الشاملة",
     "subheadline": "الشريك الموثوق في نقل البركسات، الحاويات، الصبيات الخرسانية، الحديد والمعدات الثقيلة بأعلى معايير الأمان والسرعة في جميع أنحاء المملكة.",
@@ -164,12 +166,49 @@
       "iconName": "MapPin"
     }
   ],
+  "gallery": [
+    {
+      "id": "gal-1",
+      "title": "نقل أسطول بركسات ومكاتب متنقلة",
+      "category": "نقل البركسات",
+      "imageUrl": "/src/assets/images/portakabin_transport_1786835552808.jpg",
+      "description": "عملية تحميل ونقل وتنزيل بركسات ومكاتب جاهزة لمشروع إنشائي ضخم بمدينة الرياض."
+    },
+    {
+      "id": "gal-2",
+      "title": "نقل شحنات حاويات شحن ثقيلة",
+      "category": "نقل الحاويات",
+      "imageUrl": "/src/assets/images/container_transport_1786835565647.jpg",
+      "description": "نقل حاويات تجارية 40 قدم مباشرة من الميناء إلى المستودعات الرئيسية."
+    },
+    {
+      "id": "gal-3",
+      "title": "أسطول الشاحنات والمقطورات الحديثة",
+      "category": "النقل الثقيل",
+      "imageUrl": "/src/assets/images/heavy_truck_fleet_1786835541377.jpg",
+      "description": "تجهيز أسطول مقطورات المهل للنقليات لنقل الأحمال الكبيرة والمعدات الثقيلة."
+    },
+    {
+      "id": "gal-4",
+      "title": "نقل صبيات وقواعد خرسانية جاهزة",
+      "category": "نقل الصبيات",
+      "imageUrl": "/src/assets/images/portakabin_transport_1786835552808.jpg",
+      "description": "نقل وتثبيت القواعد الخرسانية الضخمة للمشاريع الإنشائية بدقة عالية."
+    },
+    {
+      "id": "gal-5",
+      "title": "نقل الهياكل والمجسمات الحديدية",
+      "category": "نقل الحديد",
+      "imageUrl": "/src/assets/images/heavy_truck_fleet_1786835541377.jpg",
+      "description": "نقل القطع والهياكل الصلبة المصنعة للمصانع والورش الكبرى."
+    }
+  ],
   "contactInfo": {
     "phonePrimary": "+966557501998",
     "phoneSecondary": "+966 55 987 6543",
     "whatsappNumber": "966557501998",
     "email": "almhal1998@gmail.com",
-    "address": "شارع حسين سرحان - بجانب رافعة ونش كرين مكة أحجام وأنواع مختلفة للايجار",
+    "address": "مكة المكرمة - شارع حسين سرحان ",
     "cityRegion": "مكة المكرمة، المملكة العربية السعودية",
     "workingHours": "على مدار 24 ساعة - 7 أيام في الأسبوع",
     "mapEmbedUrl": "https://maps.google.com/maps?q=21.4440190,39.8523705&hl=ar&z=16&output=embed",
