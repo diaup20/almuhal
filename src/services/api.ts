@@ -105,21 +105,25 @@ export async function fetchSiteData(): Promise<SiteData> {
 
 // Update site data: Saves directly to Firebase Cloud Firestore & local cache & server API
 export async function updateSiteData(updatedData: SiteData, pin?: string): Promise<boolean> {
-  // Save locally first for instant feedback
-  saveLocalSiteData(updatedData);
+  // 1. Clean object to strip out any `undefined` values that Firestore setDoc() rejects
+  const cleanData: SiteData = JSON.parse(JSON.stringify(updatedData));
+
+  // Save locally first for instant UI response
+  saveLocalSiteData(cleanData);
 
   let success = false;
 
-  // 1. Save to Firebase Firestore Cloud (Accessible from any device, anywhere)
+  // 2. Save to Firebase Firestore Cloud (Accessible from any device, anywhere)
   try {
     const docRef = doc(db, SITE_DOC_COLLECTION, SITE_DOC_ID);
-    await setDoc(docRef, updatedData);
+    await setDoc(docRef, cleanData);
     success = true;
+    console.log('Site data successfully saved to Firebase Firestore Cloud');
   } catch (cloudErr) {
-    console.error('Firestore save failed', cloudErr);
+    console.error('Firestore save error:', cloudErr);
   }
 
-  // 2. Also save to server API (if available)
+  // 3. Also save to server API (if available)
   try {
     const res = await fetch('/api/site-data', {
       method: 'POST',
@@ -127,7 +131,7 @@ export async function updateSiteData(updatedData: SiteData, pin?: string): Promi
         'Content-Type': 'application/json',
         'x-admin-pin': pin || localStorage.getItem(ADMIN_TOKEN_KEY) || '',
       },
-      body: JSON.stringify(updatedData),
+      body: JSON.stringify(cleanData),
     });
     if (res.ok) {
       success = true;

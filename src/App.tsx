@@ -26,6 +26,11 @@ export default function App() {
 
   // Admin Dashboard view state
   const [isAdminOpen, setIsAdminOpen] = useState<boolean>(false);
+  const isAdminOpenRef = React.useRef(isAdminOpen);
+
+  useEffect(() => {
+    isAdminOpenRef.current = isAdminOpen;
+  }, [isAdminOpen]);
 
   const loadData = async () => {
     const data = await fetchSiteData();
@@ -48,13 +53,16 @@ export default function App() {
   useEffect(() => {
     loadData();
 
-    // Auto-sync every 5 seconds so updates from PC reflect live on Mobile
+    // Auto-sync every 8 seconds so public visitors see live updates,
+    // but paused when admin panel is open so form inputs aren't overwritten.
     const syncInterval = setInterval(() => {
-      loadData();
-    }, 5000);
+      if (!isAdminOpenRef.current) {
+        loadData();
+      }
+    }, 8000);
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && !isAdminOpenRef.current) {
         loadData();
       }
     };
@@ -68,14 +76,12 @@ export default function App() {
     handleLocationCheck();
 
     window.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', loadData);
     window.addEventListener('popstate', handleLocationCheck);
     window.addEventListener('hashchange', handleLocationCheck);
 
     return () => {
       clearInterval(syncInterval);
       window.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', loadData);
       window.removeEventListener('popstate', handleLocationCheck);
       window.removeEventListener('hashchange', handleLocationCheck);
     };

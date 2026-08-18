@@ -69,8 +69,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // Selected Request Detail Modal
   const [selectedRequest, setSelectedRequest] = useState<ContactRequest | null>(null);
 
+  // Track initial load so prop changes don't overwrite user's typing
+  const isInitialMount = React.useRef(true);
+
   useEffect(() => {
-    setEditableData(siteData);
+    if (isInitialMount.current) {
+      setEditableData(siteData);
+      isInitialMount.current = false;
+    }
   }, [siteData]);
 
   useEffect(() => {
@@ -124,9 +130,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     const targetData = newDataToSave || editableData;
     const ok = await updateSiteData(targetData, editableData.adminPin);
     if (ok) {
+      setEditableData(targetData);
       setSaveStatus('saved');
       onRefreshData();
-      setTimeout(() => setSaveStatus('idle'), 3000);
+      setTimeout(() => setSaveStatus('idle'), 4000);
     } else {
       setSaveStatus('error');
     }
@@ -833,6 +840,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => handleSaveAllData()}
+                  disabled={saveStatus === 'saving'}
+                  className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>حفظ بيانات الواجهة والتعريف</span>
+                </button>
+              </div>
+
             </div>
           )}
 
@@ -894,6 +913,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => handleSaveAllData()}
+                  disabled={saveStatus === 'saving'}
+                  className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>حفظ الأرقام والإحصائيات</span>
+                </button>
               </div>
 
             </div>
@@ -1038,6 +1069,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </div>
                 </div>
               </div>
+
+              <div className="pt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => handleSaveAllData()}
+                  disabled={saveStatus === 'saving'}
+                  className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>حفظ أرقام الهاتف وبيانات الاتصال</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -1111,6 +1154,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-sm"
                 />
               </div>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => handleSaveAllData()}
+                  disabled={saveStatus === 'saving'}
+                  className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>حفظ إعدادات محركات البحث</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -1158,6 +1213,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               <p className="text-xs text-slate-400 leading-relaxed">
                 تأكد من حفظ البيانات واحتفاظك باسم المستخدم وكلمة المرور في مكان آمن لاستخدامهما عند دخول رابط الإدارة مستقبلاً.
               </p>
+
+              <div className="pt-2 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => handleSaveAllData()}
+                  disabled={saveStatus === 'saving'}
+                  className="px-6 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>حفظ بيانات الدخول الجديدة</span>
+                </button>
+              </div>
             </div>
           )}
 

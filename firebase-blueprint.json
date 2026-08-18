@@ -1,0 +1,45 @@
+{
+  "entities": {
+    "SiteConfig": {
+      "title": "Site Configuration",
+      "description": "Stores site header, hero, services, features, stats, about, contactInfo, and SEO configuration.",
+      "type": "object",
+      "properties": {
+        "siteName": { "type": "string" },
+        "tagline": { "type": "string" },
+        "hero": { "type": "object" },
+        "services": { "type": "array" },
+        "features": { "type": "array" },
+        "stats": { "type": "array" },
+        "about": { "type": "object" },
+        "contactInfo": { "type": "object" },
+        "seo": { "type": "object" }
+      }
+    },
+    "ContactRequest": {
+      "title": "Contact / Quote Request",
+      "description": "Stores user submitted service inquiry or quote request.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "clientName": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "serviceType": { "type": "string" },
+        "details": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/site_settings/main_config": {
+      "schema": "SiteConfig",
+      "description": "Main site settings and content."
+    },
+    "/contact_requests/{requestId}": {
+      "schema": "ContactRequest",
+      "description": "User quotes and contact requests."
+    }
+  }
+}
