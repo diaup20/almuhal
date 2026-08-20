@@ -16,7 +16,8 @@ export const Hero: React.FC<HeroProps> = ({ content, contactInfo, onRequestQuote
       <div className="absolute inset-0 z-0">
         <img
           src={content.heroImageUrl}
-          alt="المهل للنقليات أسطول الشاحنات"
+          alt="المهل للنقليات وخدمات النقل - أسطول شاحنات النقل الثقيل والتريلات في مكة المكرمة"
+          loading="eager"
           className="w-full h-full object-cover object-center scale-105 animate-pulse-slow"
         />
         {/* Dark Vignette and Gradient Overlay */}

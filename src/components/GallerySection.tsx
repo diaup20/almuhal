@@ -111,7 +111,8 @@ export const GallerySection: React.FC<GallerySectionProps> = ({ gallery }) => {
                   <div className="relative h-64 sm:h-72 w-full bg-slate-950 overflow-hidden">
                     <img
                       src={item.imageUrl}
-                      alt={item.title}
+                      alt={`شركة المهل للنقليات - ${item.title} - ${item.category} بمكة المكرمة`}
+                      loading="lazy"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-80" />

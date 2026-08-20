@@ -30,7 +30,8 @@ export const Footer: React.FC<FooterProps> = ({ contactInfo }) => {
               <div className="w-16 h-16 rounded-2xl border-2 border-amber-500/50 overflow-hidden bg-slate-900 p-0.5 shadow-2xl shadow-amber-500/20 group-hover:border-amber-400 group-hover:scale-105 transition-all duration-300">
                 <img
                   src={siteLogoImg}
-                  alt="شعار شركة المهل للنقليات وخدمات النقل"
+                  alt="شعار شركة المهل للنقليات وخدمات النقل في مكة المكرمة"
+                  loading="lazy"
                   className="w-full h-full object-cover rounded-xl"
                 />
               </div>
